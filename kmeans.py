@@ -1,3 +1,6 @@
+import sys
+
+
 def str_to_int(f):
     cluster = []
     for v in f:
@@ -41,7 +44,6 @@ def printCentroids(centroids):
 
 
 
-
 def kmeans(k, iter, input_data):
     if(input_data.endswith('.txt') == False):
         print("NA")
@@ -54,7 +56,7 @@ def kmeans(k, iter, input_data):
 
     dataPoints = str_to_int(f)
     f.close()
-    if (k >= len(dataPoints)):
+    if (k >= len(dataPoints) or k<=1):
         print("Invalid number of clusters!")
         exit()
     if(iter >=1000 or iter<=1):
@@ -87,17 +89,40 @@ def kmeans(k, iter, input_data):
             if(d >= 0.001):
                 allUnderEps = False
         if(allUnderEps == True):
-            # print(centroids)
-            # print(iterNum)
             printCentroids(centroids)
             return
     printCentroids(centroids)
-    # print(iterNum)
-    # print(centroids)
-kmeans(11,2,"test_data/tests/input_1.txt")
 
+def main():
+    args = sys.argv[1:]
+    if(len(args) <2 or len(args) >3):
+        print("An Error Has Occurred")
+        exit()
 
+    if(len(args) == 2):
+        k = args[0]
+        iter = 200
+        input_data = args[1]
+        if (str.isdigit(k) == False):
+            print("Invalid number of clusters!")
+            exit()
+        else:
+            k = int(k)
+            kmeans(k, iter, input_data)
+    else:
+        if(len(args)== 3):
+            k = args[0]
+            iter = args[1]
+            input_data = args[2]
+            if (str.isdigit(k) == False):
+                print("Invalid number of clusters!")
+                exit()
+            elif(str.isdigit(iter) == False):
+                print("Invalid maximum iteration!")
+                exit()
+            else:
+                k = int(k)
+                iter = int(iter)
+                kmeans(k, iter, input_data)
 
-
-
-
+main()
