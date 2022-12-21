@@ -1,128 +1,83 @@
-import sys
 
+def kmeans (K, iter, input_data):
 
-def str_to_int(f):
-    cluster = []
-    for v in f:
-        v = v.split(",")
-        for i in range(len(v)):
-            v[i] = float(v[i])
-        cluster.append(v)
-    return cluster
+    data = open(input_data, "r")
 
-def distance(v, u):
-    d = 0
-    for i in range(len(v)):
-        d += (v[i]-u[i])**2
-    return d**0.5
+    def vMaker(data):
+        vArr = [] 
+        for line in data: 
+            vArr.append([eval(i) for i in line.split()[0].split(",")])
+        return vArr
+    
+    def d(v1,v2):
+        res = 0 
+        for i in range(len(v1)):
+            res += (v1[i] - v2[i]) ** 2
+        res = res**(0.5)
+        return res
+    
+    def findClosest(v, centroids):
+        minDist = d(v, centroids[0])
+        minNum = 0
+        for i in range(1, len(centroids)):
+            currDist = d(v,centroids[i])
+            if  currDist < minDist:
+                minDist = currDist 
+                minNum = i 
+        return minNum
 
-def assignToClosestCluster(xi, centroids,clusters):
-    minD = distance(xi, centroids[0])
-    index = 0
-    for i in range(1, len(centroids)):
-        d = distance(xi, centroids[i])
-        if(d < minD):
-            minD = d
-            index = i
-    clusters[index].append(xi)
+    def compute_centroid_by_cluster (cluster):
+        clustLen = len(cluster)
+        vec_len = len(cluster[0])
+        updated = [0 for i in range(vec_len)]
+        for i in range(clustLen):
+            for n in range(vec_len):
+                updated[n] += cluster[i][n]
+        for i in range(len(updated)):
+            updated[i] = updated[i]/clustLen
+        return updated
 
-def calcNewCentroid(cluster):
-    newCentroid = [0 for i in range(len(cluster[0]))]
-    for xi in cluster:
-        for cord in range(len(xi)):
-            newCentroid[cord] += xi[cord]
-    for cord in range(len(newCentroid)):
-        newCentroid[cord] = newCentroid[cord] / len(cluster)
-    return [newCentroid]
+    def compute_new_centroids(vArr, centroids):
+        clusters = [[] for i in range(K)]
+        for i in range(len(vArr)):
+            closest = findClosest(vArr[i],centroids)
+            clusters[closest].append(vArr[i])
+        updatedCentroids = []
+        for i in range(K):
+            updatedCentroids.append(compute_centroid_by_cluster(clusters[i]))
+        delta = findMaxDelta(centroids, updatedCentroids)
 
-def printCentroids(centroids):
+        return (updatedCentroids, delta)
+
+    def findMaxDelta(centroids, updatedCentroids):
+        deltas = []
+        for i in range(K):
+          deltas.append(d(centroids[i], updatedCentroids[i]))
+        return max(deltas)
+
+            
+    vArr = vMaker(data)
+    
+    if (K >= len(vArr)):
+        print("Invalid number of clusters!")
+        exit()
+    else:
+        centroids = []
+        for i in range(K):
+            centroids.append(vArr[i])
+
+    iteration_number = 0
+    delta = 1
+
+    while (delta >= 0.001 and iteration_number < iter):
+        centroids, delta = compute_new_centroids(vArr, centroids)
+        iteration_number += 1
+    
     for centroid in centroids:
         c = []
         for cord in range(len(centroid)):
             c.append(round(centroid[cord], 4))
         print(c)
+    
 
-
-
-def kmeans(k, iter, input_data):
-    if(input_data.endswith('.txt') == False):
-        print("NA")
-        exit()
-    try:
-        f = open(input_data, "r")
-    except:
-        print("An Error Has Occurred")
-        exit()
-
-    dataPoints = str_to_int(f)
-    f.close()
-    if (k >= len(dataPoints) or k<=1):
-        print("Invalid number of clusters!")
-        exit()
-    if(iter >=1000 or iter<=1):
-        print("Invalid maximum iteration!")
-        exit()
-
-
-
-    clusters = [[] for i in range(k)]
-    centroids = [0 for i in range(k)]
-    prevCentroids = []
-
-    # Initialize centroids as first k datapoints
-    for i in range(k):
-        centroids[i] = dataPoints[i]
-
-    for iterNum in range(iter):
-        # make all clusters
-        for xi in dataPoints:
-            assignToClosestCluster(xi, centroids, clusters)
-        prevCentroids = centroids.copy()
-        # update clusters, and centroids[] will be the populated with the new centroids
-        for i in range(len(clusters)):
-            clusters[i] = calcNewCentroid(clusters[i])
-            centroids[i] = clusters[i][0]
-        #check epsilon for each centroid
-        allUnderEps = True
-        for i in range(len(centroids)):
-            d = distance(centroids[i], prevCentroids[i])
-            if(d >= 0.001):
-                allUnderEps = False
-        if(allUnderEps == True):
-            printCentroids(centroids)
-            return
-    printCentroids(centroids)
-
-def main():
-    args = sys.argv[1:]
-    if(len(args) <2 or len(args) >3):
-        print("An Error Has Occurred")
-        exit()
-
-    if(len(args) == 2):
-        k = args[0]
-        iter = 200
-        input_data = args[1]
-        if (str.isdigit(k) == False):
-            print("Invalid number of clusters!")
-            exit()
-        else:
-            k = int(k)
-            kmeans(k, iter, input_data)
-    else:
-        if(len(args)== 3):
-            k = args[0]
-            iter = args[1]
-            input_data = args[2]
-            if (str.isdigit(k) == False):
-                print("Invalid number of clusters!")
-                exit()
-            elif(str.isdigit(iter) == False):
-                print("Invalid maximum iteration!")
-                exit()
-            else:
-                k = int(k)
-                iter = int(iter)
-                kmeans(k, iter, input_data)
-
-main()
+kmeans(3,600,"/Users/USER/Downloads/tests/input_1.txt")
